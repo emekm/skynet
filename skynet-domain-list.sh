@@ -11,7 +11,7 @@ whitelist_domain() {
     IP=$(ping -c 1 $DOMAIN | awk -F'[()]' '/PING/{print $2}')
     if [ -n "$IP" ]; then
         logger -t Skynet-Whitelist "Whitelisting $DOMAIN ($IP)"
-        /jffs/scripts/firewall whitelist add $IP
+        /jffs/scripts/firewall whitelist ip $IP
     else
         logger -t Skynet-Whitelist "Failed to resolve $DOMAIN"
     fi
@@ -22,7 +22,7 @@ blacklist_domain() {
     IP=$(ping -c 1 $DOMAIN | awk -F'[()]' '/PING/{print $2}')
     if [ -n "$IP" ]; then
         logger -t Skynet-Blacklist "Blacklisting $DOMAIN ($IP)"
-        /jffs/scripts/firewall blacklist add $IP
+        /jffs/scripts/firewall blacklist ip $IP
     else
         logger -t Skynet-Blacklist "Failed to resolve $DOMAIN"
     fi
