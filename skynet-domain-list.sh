@@ -1,52 +1,41 @@
 #!/bin/sh
-# skynet-domain-list.sh
-# Mise à jour automatique des whitelist/blacklist Skynet depuis domaines
 
-### Configuration ###
-# Liste des domaines à whitelister
-WHITELIST_DOMAINS=(
-    "line.diatunnel.link"
-)
+# Domains to whitelist (space‑separated string)
+WHITELIST_DOMAINS="line.diatunnel.link"
 
-# Liste des domaines à blacklister (vide pour l'instant)
-BLACKLIST_DOMAINS=(
-    # exemple : "bad.example.com"
-)
+# Domains to blacklist (empty for now)
+BLACKLIST_DOMAINS=""
 
-### Fonctions ###
-resolve_ip() {
+# Function to whitelist
+whitelist_domain() {
     DOMAIN="$1"
-    IP=$(ping -c 1 -W 1 "$DOMAIN" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
-    echo "$IP"
+    IP=$(ping -c 1 "$DOMAIN" | awk -F'[()]' '/PING/{print $2}')
+    if [ -n "$IP" ]; then
+        logger -t Skynet-Whitelist "Whitelisting $DOMAIN ($IP)"
+        /jffs/scripts/firewall whitelist add "$IP"
+    else
+        logger -t Skynet-Whitelist "Failed to resolve $DOMAIN"
+    fi
 }
 
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+# Function to blacklist
+blacklist_domain() {
+    DOMAIN="$1"
+    IP=$(ping -c 1 "$DOMAIN" | awk -F'[()]' '/PING/{print $2}')
+    if [ -n "$IP" ]; then
+        logger -t Skynet-Blacklist "Blacklisting $DOMAIN ($IP)"
+        /jffs/scripts/firewall blacklist add "$IP"
+    else
+        logger -t Skynet-Blacklist "Failed to resolve $DOMAIN"
+    fi
 }
 
-### Traitement Whitelist ###
-log "Début de la mise à jour des whitelists"
-for DOMAIN in "${WHITELIST_DOMAINS[@]}"; do
-    IP=$(resolve_ip "$DOMAIN")
-    if [ -n "$IP" ]; then
-        log "Whitelist: $DOMAIN → $IP"
-        skynet whitelist add "$IP"
-    else
-        log "Échec résolution whitelist: $DOMAIN"
-    fi
+# Process whitelist
+for DOMAIN in $WHITELIST_DOMAINS; do
+    whitelist_domain "$DOMAIN"
 done
 
-### Traitement Blacklist ###
-log "Début de la mise à jour des blacklists"
-for DOMAIN in "${BLACKLIST_DOMAINS[@]}"; do
-    IP=$(resolve_ip "$DOMAIN")
-    if [ -n "$IP" ]; then
-        log "Blacklist: $DOMAIN → $IP"
-        skynet blacklist add "$IP"
-    else
-        log "Échec résolution blacklist: $DOMAIN"
-    fi
+# Process blacklist
+for DOMAIN in $BLACKLIST_DOMAINS; do
+    blacklist_domain "$DOMAIN"
 done
-
-log "Mise à jour terminée"
-exit 0
