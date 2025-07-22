@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # Liste des domaines à whitelist (séparés par espaces)
-WHITELIST_DOMAINS="line.diatunnel.link"
+WHITELIST_DOMAINS="line.diatunnel.link","109.234.160.5","128.116.122.4"
+#iptv, o2switch, roblox
 
 # Liste des domaines à blacklist (vide pour l'instant)
 BLACKLIST_DOMAINS=""
